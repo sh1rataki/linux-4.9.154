@@ -36,6 +36,7 @@
 #include <linux/cleancache.h>
 #include <linux/rmap.h>
 #include "internal.h"
+#include <linux/memtrace.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/filemap.h>
@@ -1127,6 +1128,13 @@ repeat:
 			put_page(head);
 			goto repeat;
 		}
+#if defined(CONFIG_MEMTRACE)
+		if(get_pg_trace_pid() != -1 && current->mem_trace) {
+			unsigned long pfn = page_to_pfn(page);
+			if(pfn_valid(pfn))
+				mark_memtrace_block_accessed(pfn << PAGE_SHIFT);
+		}
+#endif
 	}
 out:
 	rcu_read_unlock();

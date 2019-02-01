@@ -134,6 +134,7 @@ obj-$(CONFIG_NETDEV_NOTIFIER_ERROR_INJECT) += netdev-notifier-error-inject.o
 obj-$(CONFIG_MEMORY_NOTIFIER_ERROR_INJECT) += memory-notifier-error-inject.o
 obj-$(CONFIG_OF_RECONFIG_NOTIFIER_ERROR_INJECT) += \
 	of-reconfig-notifier-error-inject.o
+obj-$(CONFIG_MEMTRACE) += memtrace.o
 
 lib-$(CONFIG_GENERIC_BUG) += bug.o
 

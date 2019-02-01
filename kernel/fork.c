@@ -1601,6 +1601,13 @@ static __latent_entropy struct task_struct *copy_process(
 
 	p->default_timer_slack_ns = current->timer_slack_ns;
 
+#ifdef CONFIG_MEMTRACE
+	if(current->mem_trace) {
+		p->mem_trace = 1;
+		p->seq = 0;
+	}
+#endif
+
 	task_io_accounting_init(&p->ioac);
 	acct_clear_integrals(p);
 

@@ -610,6 +610,10 @@ config DEBUG_VIRTUAL
 	  catch mistakes with virt_to_page() and friends.
 
 	  If unsure, say N.
+	 
+config MEMTRACE
+	bool "Memory Reference Tracing"
+	default n
 
 config DEBUG_NOMMU_REGIONS
 	bool "Debug the global anon/private NOMMU mapping region tree"

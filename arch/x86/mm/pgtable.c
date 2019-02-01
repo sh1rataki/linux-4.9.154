@@ -6,6 +6,7 @@
 #include <asm/tlb.h>
 #include <asm/fixmap.h>
 #include <asm/mtrr.h>
+#include <linux/module.h>
 
 #define PGALLOC_GFP (GFP_KERNEL_ACCOUNT | __GFP_NOTRACK | __GFP_ZERO)
 
@@ -463,6 +464,7 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma,
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(ptep_test_and_clear_young);
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 int pmdp_test_and_clear_young(struct vm_area_struct *vma,

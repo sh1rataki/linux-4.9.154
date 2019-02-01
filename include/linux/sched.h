@@ -1795,6 +1795,10 @@ struct task_struct {
 	u64 acct_vm_mem1;	/* accumulated virtual memory usage */
 	cputime_t acct_timexpd;	/* stime + utime since last update */
 #endif
+#if defined(CONFIG_MEMTRACE)
+	unsigned int mem_trace;
+	unsigned int seq;
+#endif
 #ifdef CONFIG_CPUSETS
 	nodemask_t mems_allowed;	/* Protected by alloc_lock */
 	seqcount_t mems_allowed_seq;	/* Seqence no to catch updates */

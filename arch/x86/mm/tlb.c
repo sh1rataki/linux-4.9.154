@@ -406,6 +406,7 @@ out:
 		flush_tlb_others(mm_cpumask(mm), mm, start, end);
 	preempt_enable();
 }
+EXPORT_SYMBOL_GPL(flush_tlb_mm_range);
 
 static void do_flush_tlb_all(void *info)
 {

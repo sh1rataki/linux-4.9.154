@@ -1132,7 +1132,7 @@ repeat:
 		if(get_pg_trace_pid() != -1 && current->mem_trace) {
 			unsigned long pfn = page_to_pfn(page);
 			if(pfn_valid(pfn))
-				mark_memtrace_block_accessed(pfn << PAGE_SHIFT);
+				mark_memtrace_block(pfn << PAGE_SHIFT, 1, 1, 1);
 		}
 #endif
 	}

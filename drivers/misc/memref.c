@@ -73,14 +73,15 @@ static int check_and_clear_task_pages(pmd_t *pmd, unsigned long addr,
 		}
 		pfn = pte_pfn(ptent);
 		if(pfn_valid(pfn)) {
-			paddr = pfn << PAGE_SHIFT;
-			mark_memtrace_block(paddr, bit_referenced, bit_dirty, bit_rw);
+			if(bit_referenced||bit_dirty||bit_rw){
+				paddr = pfn << PAGE_SHIFT;
+				mark_memtrace_block(paddr, bit_referenced, bit_dirty, bit_rw);
 			}
 		}
 		bit_referenced = 0;
 		bit_dirty = 0;
 		bit_rw = 0;
-	}
+		}
 	pte_unmap_unlock(pte - 1, ptl);
 	return 0;
 }

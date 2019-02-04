@@ -466,6 +466,22 @@ int ptep_test_and_clear_young(struct vm_area_struct *vma,
 }
 EXPORT_SYMBOL_GPL(ptep_test_and_clear_young);
 
+int ptep_test_and_clear_dirty(struct vm_area_struct *vma,
+			      unsigned long addr, pte_t *ptep)
+{
+	int ret = 0;
+
+	if (pte_dirty(*ptep))
+		ret = test_and_clear_bit(_PAGE_BIT_DIRTY,
+					 (unsigned long *) &ptep->pte);
+
+	if (ret)
+		pte_update(vma->vm_mm, addr, ptep);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(ptep_test_and_clear_dirty);
+
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 int pmdp_test_and_clear_young(struct vm_area_struct *vma,
 			      unsigned long addr, pmd_t *pmdp)

@@ -9,6 +9,8 @@ extern pid_t pg_trace_pid;
 struct memtrace_block {
 	unsigned int    seq;
 	unsigned long	access_flag;
+	unsigned long dirty_flag;
+	unsigned long rw_flag;
 };
 
 #define MAX_MEMTRACE_BLOCK 512
@@ -22,7 +24,8 @@ void init_seq_number(void);
 unsigned int get_seq_number(void);
 unsigned int inc_seq_number(void);
 void set_memtrace_block_sz(int sz);
-void mark_memtrace_block_accessed(unsigned long paddr);
+//void mark_memtrace_block_accessed(unsigned long paddr);
+void mark_memtrace_block(unsigned long paddr, unsigned long bir_ref, unsigned long bir_dir, unsigned long bir_rw);
 void init_memtrace_blocks(void);
 void kernel_mapping_ref(void);
 void update_and_log_data(void);

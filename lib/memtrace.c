@@ -205,12 +205,12 @@ EXPORT_SYMBOL_GPL(kernel_mapping_ref);
 // }
 // EXPORT_SYMBOL_GPL(mark_memtrace_block_accessed);
 
-void mark_memtrace_block(unsigned long paddr, unsigned long bir_ref,unsigned long bir_dir,unsigned long bir_rw){
+void mark_memtrace_block(unsigned long paddr, unsigned long bit_ref,unsigned long bit_dir,unsigned long bit_rw){
 	int memtrace_block;
 	unsigned long paddr_pg;
 
 	paddr_pg = paddr >> MB_SHIFT;
-	memtrace_block = ((int) paddr_pg/memtrace_block_size) + 1;
+	memtrace_block = ((int) paddr_pg / memtrace_block_sz) + 1;
 
 	memtrace_block_accessed[memtrace_block].seq = get_seq_number();
 	memtrace_block_accessed[memtrace_block].access_flag = bit_ref;

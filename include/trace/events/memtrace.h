@@ -7,7 +7,7 @@
 #define _TRACE_MEMTRACE_H
 
 TRACE_EVENT(memtrace,
-	TP_PROTO(unsigned int seq, unsigned long base, unsigned long access_flag, unsigned long dirty_flag unsigned long rw_flag),
+	TP_PROTO(unsigned int seq, unsigned long base, unsigned long access_flag, unsigned long dirty_flag, unsigned long rw_flag),
 	TP_ARGS(seq, base, access_flag, dirty_flag, rw_flag),
 	TP_STRUCT__entry(
 		__field(	unsigned int ,	seq		)

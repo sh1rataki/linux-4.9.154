@@ -87,6 +87,10 @@ static void walk_k_pte_level(pmd_t pmd, unsigned long addr)
 	unsigned long pfn;
 	struct page *pg;
 
+	unsigned long bit_referenced = 0;
+	unsigned long bit_dirty = 0;
+	unsigned long bit_rw = 0;
+
 	pte = (pte_t*) pmd_page_vaddr(pmd);
 
  	for (i = 0; i < PTRS_PER_PTE; i++, pte++) {
@@ -94,14 +98,32 @@ static void walk_k_pte_level(pmd_t pmd, unsigned long addr)
 			continue;
 
 		pfn = pte_pfn(*pte);
-		if(pfn_valid(pfn) && pte_young(*pte)) {
-			ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,
-						(unsigned long *) &pte->pte);
-			if (ret) {
-				pg = pfn_to_page(pfn);
-				ClearPageReferenced(pg);
-				mark_memtrace_block_accessed(pfn << PAGE_SHIFT);
+		if (pfn_valid(pfn)) {
+			if (pte_young(*pte)) {
+				ret = test_and_clear_bit(_PAGE_BIT_ACCESSED, (unsigned long *) &pte->pte);
+				if (ret) {
+					pg = pfn_to_page(pfn);
+					ClearPageReferenced(pg);
+					bit_referenced = 1;
+				}
 			}
+			if (pte_dirty(*pte)) {
+				ret = test_and_clear_bit(_PAGE_BIT_DIRTY, (unsigned long *) &pte->pte);
+				if (ret) {
+					pg = pfn_to_page(pfn);
+					ClearPageDirty(pg);
+					bit_referenced = 1;
+				}
+			}
+			if (pte_write(*pte)) {
+				bit_rw = 1;
+			}
+			if(bit_referenced||bit_dirty||bit_rw){
+				mark_memtrace_block(pfn << PAGE_SHIFT, bit_referenced, bit_dirty,bit_rw);
+			}
+			bit_referenced = 0;
+			bit_dirty = 0;
+			bit_rw = 0;
 		}
  	}
 }
@@ -170,36 +192,60 @@ void kernel_mapping_ref(void)
 }
 EXPORT_SYMBOL_GPL(kernel_mapping_ref);
 
-void mark_memtrace_block_accessed(unsigned long paddr)
- {
+// void mark_memtrace_block_accessed(unsigned long paddr)
+//  {
+// 	int memtrace_block;
+// 	unsigned long paddr_mb;
+
+// 	paddr_mb = paddr >> MB_SHIFT;
+
+// 	memtrace_block = ((int) paddr_mb/memtrace_block_sz) + 1;
+// 	memtrace_block_accessed[memtrace_block].seq = get_seq_number();
+// 	memtrace_block_accessed[memtrace_block].access_flag = 1;
+// }
+// EXPORT_SYMBOL_GPL(mark_memtrace_block_accessed);
+
+void mark_memtrace_block(unsigned long paddr, unsigned long bit_ref,unsigned long bit_dir,unsigned long bit_rw){
 	int memtrace_block;
-	unsigned long paddr_mb;
+	unsigned long paddr_pg;
 
-	paddr_mb = paddr >> MB_SHIFT;
+	paddr_pg = paddr >> MB_SHIFT;
+	memtrace_block = ((int) paddr_pg / memtrace_block_sz) + 1;
 
-	memtrace_block = ((int) paddr_mb/memtrace_block_sz) + 1;
 	memtrace_block_accessed[memtrace_block].seq = get_seq_number();
-	memtrace_block_accessed[memtrace_block].access_flag = 1;
+	memtrace_block_accessed[memtrace_block].access_flag = bit_ref;
+	memtrace_block_accessed[memtrace_block].dirty_flag = bit_dir;
+	memtrace_block_accessed[memtrace_block].rw_flag = bit_rw;	
 }
-EXPORT_SYMBOL_GPL(mark_memtrace_block_accessed);
+EXPORT_SYMBOL_GPL(mark_memtrace_block);
+
 
 void update_and_log_data(void)
 {
  	int i;
-	unsigned int seq;
-	unsigned long base_addr, access_flag;
+	unsigned int seq,seq_now;
+	unsigned long base_addr, access_flag, dirty_flag, rw_flag;
+
+	seq_now = get_seq_number();
 
 	for (i = 1; i <= total_block_count; i++) {
 		seq = memtrace_block_accessed[i].seq;
 		base_addr = i * memtrace_block_sz;
 		access_flag = memtrace_block_accessed[i].access_flag;
+		dirty_flag = memtrace_block_accessed[i].dirty_flag;
+		rw_flag = memtrace_block_accessed[i].rw_flag;
+
 		/*
 		 *  Log trace data
 		 *  Can modify to dump only blocks that have been marked
 		 *  accessed
 		 */
-        trace_memtrace(seq, base_addr, access_flag);
+		if(seq == seq_now){
+    	trace_memtrace(seq, base_addr, access_flag, dirty_flag, rw_flag);
+		}
 		memtrace_block_accessed[i].access_flag = 0;
+		memtrace_block_accessed[i].dirty_flag = 0;
+		memtrace_block_accessed[i].rw_flag = 0;
  	}
 
 	return;

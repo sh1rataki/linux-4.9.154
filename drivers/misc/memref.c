@@ -20,7 +20,7 @@ struct mm_struct *k_mm;
 
 static pid_t trace_pid = -1;
 static int interval = 10;
-static int memtrace_block_size = 64;
+static int memtrace_block_size = 2;
 
 #define LIMIT 1024
 int top = -1;
@@ -42,7 +42,11 @@ static int check_and_clear_task_pages(pmd_t *pmd, unsigned long addr,
 	spinlock_t *ptl;
 	struct page *page;
 	unsigned long paddr;
-
+	
+	unsigned long bit_referenced = 0;
+	unsigned long bit_dirty = 0;
+	unsigned long bit_rw = 0;
+	
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
 	for (; addr != end; pte++, addr += PAGE_SIZE) {
 		ptent = *pte;
@@ -58,13 +62,26 @@ static int check_and_clear_task_pages(pmd_t *pmd, unsigned long addr,
 		 */
 		if(ptep_test_and_clear_young(vma, addr, pte)) {
 			ClearPageReferenced(page);
-			pfn = pte_pfn(ptent);
-			if(pfn_valid(pfn)) {
+			bit_referenced = 1;
+		}
+		if(ptep_test_and_clear_dirty(vma, addr, pte)){
+			ClearPageReferenced(page);
+			bit_dirty = 1;
+		}
+		if (pte_write(*pte)) {
+			bit_rw = 1;
+		}
+		pfn = pte_pfn(ptent);
+		if(pfn_valid(pfn)) {
+			if(bit_referenced||bit_dirty||bit_rw){
 				paddr = pfn << PAGE_SHIFT;
-				mark_memtrace_block_accessed(paddr);
+				mark_memtrace_block(paddr, bit_referenced, bit_dirty, bit_rw);
 			}
 		}
-	}
+		bit_referenced = 0;
+		bit_dirty = 0;
+		bit_rw = 0;
+		}
 	pte_unmap_unlock(pte - 1, ptl);
 	return 0;
 }
